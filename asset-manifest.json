@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/cherishreview/static/css/main.8bfc3f62.css",
-    "main.js": "/cherishreview/static/js/main.59561164.js",
+    "main.css": "/cherishreview/static/css/main.b2f86011.css",
+    "main.js": "/cherishreview/static/js/main.06c712fe.js",
     "index.html": "/cherishreview/index.html",
-    "main.8bfc3f62.css.map": "/cherishreview/static/css/main.8bfc3f62.css.map",
-    "main.59561164.js.map": "/cherishreview/static/js/main.59561164.js.map"
+    "main.b2f86011.css.map": "/cherishreview/static/css/main.b2f86011.css.map",
+    "main.06c712fe.js.map": "/cherishreview/static/js/main.06c712fe.js.map"
   },
   "entrypoints": [
-    "static/css/main.8bfc3f62.css",
-    "static/js/main.59561164.js"
+    "static/css/main.b2f86011.css",
+    "static/js/main.06c712fe.js"
   ]
 }
