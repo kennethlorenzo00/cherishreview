@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, RotateCcw, Settings, Heart, Star, Coffee, Music, Zap } from 'lucide-react';
+import { Play, Pause, RotateCcw, Settings, Heart, Star, Coffee, Music, Zap, Volume2, VolumeX } from 'lucide-react';
 import './App.css';
 
 const App = () => {
@@ -20,12 +20,15 @@ const App = () => {
     rainbowMode: false,
     konamiCode: false
   });
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [konamiSequence, setKonamiSequence] = useState([]);
   const [showSparkles, setShowSparkles] = useState(false);
   const [secretMessage, setSecretMessage] = useState('');
   
   const intervalRef = useRef(null);
   const audioRef = useRef(null);
+  const startSoundRef = useRef(null);
+  const finishSoundRef = useRef(null);
 
   // Easter egg: Konami code detection
   useEffect(() => {
@@ -60,6 +63,9 @@ const App = () => {
           if (prev <= 1) {
             setIsRunning(false);
             playNotificationSound();
+            // Show completion message
+            setSecretMessage(mode === 'pomodoro' ? '🍅 Focus session complete! Great job! 💪' : '☕ Break time is over! Ready to focus? ✨');
+            setTimeout(() => setSecretMessage(''), 3000);
             if (mode === 'pomodoro') {
               setCompletedPomodoros(prev => prev + 1);
             }
@@ -76,8 +82,69 @@ const App = () => {
   }, [isRunning, timeLeft, mode]);
 
   const playNotificationSound = () => {
-    if (audioRef.current) {
-      audioRef.current.play();
+    if (!soundEnabled) return;
+    
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      // Create a cute chime sound
+      const oscillator1 = audioContext.createOscillator();
+      const oscillator2 = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator1.connect(gainNode);
+      oscillator2.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // First note (higher pitch)
+      oscillator1.frequency.setValueAtTime(1000, audioContext.currentTime);
+      oscillator1.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
+      
+      // Second note (lower pitch)
+      oscillator2.frequency.setValueAtTime(800, audioContext.currentTime + 0.1);
+      oscillator2.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.2);
+      
+      gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+      
+      oscillator1.start(audioContext.currentTime);
+      oscillator1.stop(audioContext.currentTime + 0.3);
+      
+      oscillator2.start(audioContext.currentTime + 0.1);
+      oscillator2.stop(audioContext.currentTime + 0.4);
+    } catch (error) {
+      console.log('Audio not supported, using fallback');
+      if (finishSoundRef.current && soundEnabled) {
+        finishSoundRef.current.play();
+      }
+    }
+  };
+
+  const playStartSound = () => {
+    if (!soundEnabled) return;
+    
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
+      oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.2);
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (error) {
+      console.log('Audio not supported, using fallback');
+      if (startSoundRef.current && soundEnabled) {
+        startSoundRef.current.play();
+      }
     }
   };
 
@@ -89,6 +156,7 @@ const App = () => {
 
   const startTimer = () => {
     setIsRunning(true);
+    playStartSound(); // Play start sound
     setEasterEggs(prev => ({ ...prev, clickCount: prev.clickCount + 1 }));
     
     // Easter egg: Click 10 times to trigger hearts
@@ -167,7 +235,15 @@ const App = () => {
 
   return (
     <div className={`app ${easterEggs.rainbowMode ? 'rainbow-mode' : ''}`}>
-      <audio ref={audioRef} src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT" />
+      {/* Start sound - cute bell chime */}
+      <audio ref={startSoundRef} preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT" type="audio/wav" />
+      </audio>
+      
+      {/* Finish sound - gentle notification */}
+      <audio ref={finishSoundRef} preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT" type="audio/wav" />
+      </audio>
       
       {/* Easter Egg Sparkles */}
       <AnimatePresence>
@@ -358,6 +434,18 @@ const App = () => {
           transition={{ duration: 0.6, delay: 0.8 }}
         >
           <Settings size={20} />
+        </motion.button>
+
+        <motion.button
+          className="sound-btn"
+          onClick={() => setSoundEnabled(!soundEnabled)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 1.0 }}
+        >
+          {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
         </motion.button>
 
         {/* Settings Modal */}
